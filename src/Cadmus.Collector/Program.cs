@@ -12,14 +12,15 @@ var cadmusApiBaseUrl = builder.Configuration["CadmusApi:BaseUrl"]
     ?? throw new InvalidOperationException(
         "A configuração CadmusApi:BaseUrl é obrigatória.");
 
+var cadmusApiKey = builder.Configuration["CadmusApi:ApiKey"]
+    ?? throw new InvalidOperationException(
+        "A configuração CadmusApi:ApiKey é obrigatória.");
+
 builder.Services.AddHttpClient("CadmusApi", client =>
 {
     client.BaseAddress = new Uri(cadmusApiBaseUrl);
+
+    client.DefaultRequestHeaders.Add(
+        "X-Cadmus-Collector-Key",
+        cadmusApiKey);
 });
-
-builder.Services.AddSingleton<CollectorCheckpointStore>();
-
-builder.Services.AddHostedService<Worker>();
-
-var host = builder.Build();
-host.Run();

@@ -3,9 +3,11 @@ using Cadmus.Api.Data;
 using Cadmus.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Cadmus.Api.Security;
 
 namespace Cadmus.Api.Controllers;
 
+[RequireCollectorApiKey]
 [ApiController]
 [Route("api/v1/collector/print-events")]
 public sealed class CollectorPrintEventsController : ControllerBase
