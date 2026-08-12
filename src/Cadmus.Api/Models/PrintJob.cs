@@ -4,6 +4,8 @@ public sealed class PrintJob
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    public string? SourceEventId { get; set; }
+
     public string UserName { get; set; } = string.Empty;
 
     public string DocumentName { get; set; } = string.Empty;
