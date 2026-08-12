@@ -1,3 +1,4 @@
+using Cadmus.Collector.State;
 using Cadmus.Collector;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -15,6 +16,8 @@ builder.Services.AddHttpClient("CadmusApi", client =>
 {
     client.BaseAddress = new Uri(cadmusApiBaseUrl);
 });
+
+builder.Services.AddSingleton<CollectorCheckpointStore>();
 
 builder.Services.AddHostedService<Worker>();
 
