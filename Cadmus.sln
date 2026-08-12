@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{FE22985E-CE1
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cadmus.Api", "src\Cadmus.Api\Cadmus.Api.csproj", "{3EE6A646-287B-4608-909A-3C4B1DCC5470}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cadmus.Collector", "src\Cadmus.Collector\Cadmus.Collector.csproj", "{CE963201-9135-4B63-A097-6329854656F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,8 +22,13 @@ Global
 		{3EE6A646-287B-4608-909A-3C4B1DCC5470}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3EE6A646-287B-4608-909A-3C4B1DCC5470}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3EE6A646-287B-4608-909A-3C4B1DCC5470}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE963201-9135-4B63-A097-6329854656F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE963201-9135-4B63-A097-6329854656F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE963201-9135-4B63-A097-6329854656F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE963201-9135-4B63-A097-6329854656F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{3EE6A646-287B-4608-909A-3C4B1DCC5470} = {FE22985E-CE1F-4148-84E5-81BCC53B6A6A}
+		{CE963201-9135-4B63-A097-6329854656F5} = {FE22985E-CE1F-4148-84E5-81BCC53B6A6A}
 	EndGlobalSection
 EndGlobal
