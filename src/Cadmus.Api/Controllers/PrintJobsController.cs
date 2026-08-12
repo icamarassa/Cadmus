@@ -1,3 +1,4 @@
+using Cadmus.Api.Contracts;
 using Cadmus.Api.Data;
 using Cadmus.Api.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -35,10 +36,20 @@ public sealed class PrintJobsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<PrintJob>> Create(PrintJob printJob)
+    public async Task<ActionResult<PrintJob>> Create(CreatePrintJobRequest request)
     {
-        printJob.Id = Guid.NewGuid();
-        printJob.SubmittedAt = DateTimeOffset.UtcNow;
+        var printJob = new PrintJob
+        {
+            Id = Guid.NewGuid(),
+            UserName = request.UserName,
+            DocumentName = request.DocumentName,
+            PrinterName = request.PrinterName,
+            ClientComputer = request.ClientComputer,
+            SubmittedAt = DateTimeOffset.UtcNow,
+            CompletedAt = request.CompletedAt,
+            Pages = request.Pages,
+            Status = request.Status
+        };
 
         _dbContext.PrintJobs.Add(printJob);
         await _dbContext.SaveChangesAsync();
