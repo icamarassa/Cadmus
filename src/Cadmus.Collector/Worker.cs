@@ -1,3 +1,4 @@
+using System.Diagnostics.Eventing.Reader;
 using System.Net.Http.Json;
 using Cadmus.Collector.Contracts;
 
@@ -5,6 +6,9 @@ namespace Cadmus.Collector;
 
 public sealed class Worker : BackgroundService
 {
+    private const string PrintServiceLogName =
+        "Microsoft-Windows-PrintService/Operational";
+
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<Worker> _logger;
 
@@ -16,38 +20,68 @@ public sealed class Worker : BackgroundService
         _logger = logger;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(
+        CancellationToken stoppingToken)
     {
         _logger.LogInformation(
             "Cadmus Collector iniciou em {StartedAt}",
             DateTimeOffset.Now);
 
-        await SendTestEventAsync(stoppingToken);
+        const string query = "*[System[(EventID=307)]]";
 
-        while (!stoppingToken.IsCancellationRequested)
+        var eventQuery = new EventLogQuery(
+            PrintServiceLogName,
+            PathType.LogName,
+            query)
         {
-            _logger.LogInformation(
-                "Cadmus Collector está em execução em {CheckedAt}",
-                DateTimeOffset.Now);
+            ReverseDirection = true
+        };
 
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+        using var reader = new EventLogReader(eventQuery);
+
+        for (var count = 0; count < 10; count++)
+        {
+            using var printEvent = reader.ReadEvent();
+
+            if (printEvent is null)
+            {
+                break;
+            }
+
+            if (printEvent.Properties.Count < 8)
+            {
+                _logger.LogWarning(
+                    "Evento {RecordId} ignorado: formato inesperado.",
+                    printEvent.RecordId);
+
+                continue;
+            }
+
+            var printJob = new CollectorPrintEventRequest
+            {
+                SourceEventId =
+                    $"{printEvent.MachineName}:{printEvent.RecordId}",
+                DocumentName =
+                    printEvent.Properties[1].Value?.ToString() ?? string.Empty,
+                UserName =
+                    printEvent.Properties[2].Value?.ToString() ?? string.Empty,
+                ClientComputer =
+                    printEvent.Properties[3].Value?.ToString(),
+                PrinterName =
+                    printEvent.Properties[4].Value?.ToString() ?? string.Empty,
+                Pages = Convert.ToInt32(printEvent.Properties[7].Value),
+                Status = "Completed",
+                CompletedAt = printEvent.TimeCreated
+            };
+
+            await SendPrintEventAsync(printJob, stoppingToken);
         }
     }
 
-    private async Task SendTestEventAsync(CancellationToken stoppingToken)
+    private async Task SendPrintEventAsync(
+        CollectorPrintEventRequest printEvent,
+        CancellationToken stoppingToken)
     {
-        var printEvent = new CollectorPrintEventRequest
-        {
-            SourceEventId = "DEV-CADMUS-COLLECTOR:307:1",
-            UserName = "cadmus.collector",
-            DocumentName = "evento-de-teste.txt",
-            PrinterName = "IMPRESSORA-TESTE",
-            ClientComputer = Environment.MachineName,
-            Pages = 1,
-            Status = "Completed",
-            CompletedAt = DateTimeOffset.UtcNow
-        };
-
         var client = _httpClientFactory.CreateClient("CadmusApi");
 
         var response = await client.PostAsJsonAsync(
@@ -58,8 +92,10 @@ public sealed class Worker : BackgroundService
         if (response.IsSuccessStatusCode)
         {
             _logger.LogInformation(
-                "Evento de teste enviado. Status HTTP: {StatusCode}",
-                (int)response.StatusCode);
+                "Impressão enviada: {DocumentName} | {UserName} | {PrinterName}",
+                printEvent.DocumentName,
+                printEvent.UserName,
+                printEvent.PrinterName);
 
             return;
         }
@@ -67,7 +103,8 @@ public sealed class Worker : BackgroundService
         var error = await response.Content.ReadAsStringAsync(stoppingToken);
 
         _logger.LogError(
-            "Falha ao enviar evento de teste. Status HTTP: {StatusCode}. Erro: {Error}",
+            "Falha ao enviar evento {SourceEventId}. HTTP {StatusCode}: {Error}",
+            printEvent.SourceEventId,
             (int)response.StatusCode,
             error);
     }
