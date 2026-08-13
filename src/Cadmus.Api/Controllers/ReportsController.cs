@@ -57,4 +57,38 @@ public sealed class ReportsController : ControllerBase
 
         return Ok(response);
     }
+    [HttpGet("by-user")]
+public async Task<ActionResult<IEnumerable<PrintUsageByUserResponse>>> GetByUser(
+    [FromQuery] DateTimeOffset? from,
+    [FromQuery] DateTimeOffset? to)
+{
+    var end = to ?? DateTimeOffset.UtcNow;
+    var start = from ?? end.AddDays(-30);
+
+    if (start > end)
+    {
+        return BadRequest(
+            "O parâmetro 'from' não pode ser posterior a 'to'.");
+    }
+
+    var report = await _dbContext.PrintJobs
+        .AsNoTracking()
+        .Where(job =>
+            job.CompletedAt.HasValue &&
+            job.CompletedAt >= start &&
+            job.CompletedAt <= end &&
+            job.Status == "Completed")
+        .GroupBy(job => job.UserName)
+        .Select(group => new PrintUsageByUserResponse
+        {
+            UserName = group.Key,
+            TotalJobs = group.Count(),
+            TotalPages = group.Sum(job => job.Pages)
+        })
+        .OrderByDescending(item => item.TotalPages)
+        .ThenBy(item => item.UserName)
+        .ToListAsync();
+
+    return Ok(report);
+}
 }
